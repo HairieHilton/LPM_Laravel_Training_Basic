@@ -14,19 +14,26 @@ class TodoController extends Controller
         $this->middleware('auth');
     }
        
-    public function index()
+    public function index(Request $request)
     {
+        if($request->keyword){
+            $user = auth()->user();
+            $todos = $user->todos()
+                        ->where('title', 'LIKE', '%'.$request->keyword.'%')
+                        ->paginate(3);
+        }else{
         //query list of todos from db
-        $todos=Todo::paginate(3);
-        //$user = auth()->user();
+            $user = auth()->user();
+            $todos = $user->todos()->paginate(3);
+        }
 
-        //$todos = $user->todos;
+        
 
         //return to view resources/views/todos
         return view('todos.index',compact('todos'));
     } 
 
-    public function  create()
+    public function create()
     {
         //show create form
         return view ('todos.create');
@@ -48,7 +55,7 @@ class TodoController extends Controller
 
     if($request->hasFile('attachment')){
         $filename = $todo->id.'-'.date("Y-m-d").'.'.$request->attachment->getClientOriginalExtension();
-        
+
         Storage::disk('public')->put($filename, File::get($request->attachment));
 
         $todo->attachment = $filename;
